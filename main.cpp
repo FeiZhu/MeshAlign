@@ -12,13 +12,14 @@ using namespace std;
 
 int main()
 {
-    string target_mesh_file("plant_fine.obj");
-    string source_mesh_file("plant_coarse.obj");
+    string input_target_mesh_file("fine.obj");
+    string input_source_mesh_file("coarse.obj");
     Physika::SurfaceMesh<float> target_mesh, source_mesh;
-    Physika::SurfaceMeshIO<float>::load(target_mesh_file,&target_mesh);
-    Physika::SurfaceMeshIO<float>::load(source_mesh_file,&source_mesh);
-    alignMesh(target_mesh,source_mesh);
-    Physika::SurfaceMeshIO<float>::save(target_mesh_file,&target_mesh);
-    Physika::SurfaceMeshIO<float>::save(source_mesh_file,&source_mesh);
+    Physika::SurfaceMeshIO<float>::load(input_target_mesh_file,&target_mesh);
+    Physika::SurfaceMeshIO<float>::load(input_source_mesh_file,&source_mesh);
+    unsigned int grid_res = 100;
+    alignMesh(target_mesh,source_mesh,grid_res);
+    string output_source_mesh_file("coarse_out.obj");
+    Physika::SurfaceMeshIO<float>::save(output_source_mesh_file,&source_mesh);
     return 0;
 }

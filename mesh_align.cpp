@@ -47,8 +47,9 @@ void makeLevelSet(const Physika::SurfaceMesh<float> &surface_mesh, const Physika
         origin[dim] = grid_min_corner[dim];
     float dx;
     Physika::Vector<float,3> grid_dx = grid.dX();
-    if(!(grid_dx[0] == grid_dx[1] && grid_dx[1] == grid_dx[2]))
+    if(!(Physika::isEqual(grid_dx[0],grid_dx[1]) && Physika::isEqual(grid_dx[1],grid_dx[2])))
     {
+        std::cout<<grid_dx[0]<<" "<<grid_dx[1]<<" "<<grid_dx[2]<<"\n";
         std::cout<<"Error: only support grid with uniform grid size in each direction!\n";
         return;
     }
@@ -102,23 +103,30 @@ void alignMesh(Physika::SurfaceMesh<float> &target_mesh, Physika::SurfaceMesh<fl
 {
     Physika::Range<float,3> target_mesh_aabb = target_mesh.axisAlignedBoundingBox();
     Physika::Range<float,3> source_mesh_aabb = source_mesh.axisAlignedBoundingBox();
-    //the grid range is the union of the two bounding boxes
+    //the grid range is the union of the two bounding boxes, grid size is uniform in each direction
     Physika::Range<float,3> grid_range;
-    Physika::Vector<float,3> grid_min_corner,grid_max_corner;
+    Physika::Vector<float,3> grid_min_corner;
+    float grid_size = 0.0;
     for(unsigned int dim = 0; dim < 3; ++dim)
     {
         grid_min_corner[dim] = Physika::min(target_mesh_aabb.minCorner()[dim],source_mesh_aabb.minCorner()[dim]);
-        grid_max_corner[dim] = Physika::max(target_mesh_aabb.maxCorner()[dim],source_mesh_aabb.maxCorner()[dim]);
+        grid_size = grid_size > target_mesh_aabb.edgeLengths()[dim] ? grid_size : target_mesh_aabb.edgeLengths()[dim];
+        grid_size = grid_size > source_mesh_aabb.edgeLengths()[dim] ? grid_size : source_mesh_aabb.edgeLengths()[dim];
     }
+    Physika::Vector<float,3> grid_max_corner(grid_size);
+    grid_max_corner += grid_min_corner;
     grid_range.setMinCorner(grid_min_corner);
     grid_range.setMaxCorner(grid_max_corner);
     Physika::Grid<float,3> grid(grid_range,level_set_res-1);
     Physika::ArrayND<float,3> signed_dist;
+    std::cout<<"Generating level set for target mesh...\n";
     makeLevelSet(target_mesh,grid,signed_dist);
     Physika::ArrayND<Physika::Vector<float,3>,3> signed_dist_grad;
+    std::cout<<"Generating level set gradient for target mesh...\n";
     makeLevelSetGradient(grid,signed_dist,signed_dist_grad);
     //for each vertex of the source mesh, move it in the negative gradient direction
     //the distance to be moved is the distance from the vertex to target mesh
+    std::cout<<"Aligning mesh...\n";
     for(unsigned int vert_idx = 0; vert_idx < source_mesh.numVertices(); ++vert_idx)
     {
         Physika::Vector<float,3> vert_pos = source_mesh.vertexPosition(vert_idx);
@@ -150,4 +158,5 @@ void alignMesh(Physika::SurfaceMesh<float> &target_mesh, Physika::SurfaceMesh<fl
         //update the vertex position of the source mesh
         source_mesh.setVertexPosition(vert_idx,vert_pos);
     }
+    std::cout<<"Done!\n";
 }
