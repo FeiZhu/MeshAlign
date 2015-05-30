@@ -124,7 +124,7 @@ void alignMesh(Physika::SurfaceMesh<float> &target_mesh, Physika::SurfaceMesh<fl
     Physika::ArrayND<Physika::Vector<float,3>,3> signed_dist_grad;
     std::cout<<"Generating level set gradient for target mesh...\n";
     makeLevelSetGradient(grid,signed_dist,signed_dist_grad);
-    //for each vertex of the source mesh, move it in the negative gradient direction
+    //for each vertex of the source mesh, move it closer to the target mesh along gradient direction
     //the distance to be moved is the distance from the vertex to target mesh
     std::cout<<"Aligning mesh...\n";
     for(unsigned int vert_idx = 0; vert_idx < source_mesh.numVertices(); ++vert_idx)
@@ -154,7 +154,7 @@ void alignMesh(Physika::SurfaceMesh<float> &target_mesh, Physika::SurfaceMesh<fl
                 }
             }
         }
-        vert_pos += -Physika::abs(vert_signed_dist)*(vert_gradient.normalize());
+        vert_pos += -vert_signed_dist*(vert_gradient.normalize());
         //update the vertex position of the source mesh
         source_mesh.setVertexPosition(vert_idx,vert_pos);
     }
